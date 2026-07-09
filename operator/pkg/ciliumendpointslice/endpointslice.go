@@ -183,6 +183,19 @@ func (c *DefaultController) Start(ctx cell.HookContext) error {
 			c.worker()
 			return nil
 		}),
+		job.OneShot("debug-cache-dump", func(ctx context.Context, _ cell.Health) error {
+			t := time.NewTicker(5 * time.Second)
+			defer t.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return nil
+				case <-t.C:
+					dump := c.manager.mapping.DebugDump("")
+					c.logger.Info("CES cache dump:\n" + dump)
+				}
+			}
+		}),
 		// Add the shutdown job last so it stops first.
 		job.OneShot("shutdown", func(ctx context.Context, health cell.Health) error {
 			<-ctx.Done()

@@ -4,6 +4,10 @@
 package ciliumendpointslice
 
 import (
+	"fmt"
+	"sort"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	capi_v2a1 "github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2alpha1"
@@ -161,6 +165,27 @@ func (c *CESToCEPMapping) getCESNamespace(name CESName) string {
 		return cesData.ns
 	}
 	return ""
+}
+
+// DebugDump returns a printable snapshot of the mapping: "ces=NAME -> [cep1, cep2, ...]".
+// If cesFilter is non-empty, only CES names containing the substring are included.
+func (c *CESToCEPMapping) DebugDump(cesFilter string) string {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+	var sb strings.Builder
+	for cesName, data := range c.cesNameToData {
+		if cesFilter != "" && !strings.Contains(string(cesName), cesFilter) {
+			continue
+		}
+		ceps := data.ceps.UnsortedList()
+		names := make([]string, 0, len(ceps))
+		for _, cep := range ceps {
+			names = append(names, fmt.Sprintf("%s/%s", cep.Namespace, cep.Name))
+		}
+		sort.Strings(names)
+		sb.WriteString(fmt.Sprintf("  ces=%s -> [%s]\n", cesName, strings.Join(names, ", ")))
+	}
+	return sb.String()
 }
 
 func (ces CESKey) key() resource.Key {
