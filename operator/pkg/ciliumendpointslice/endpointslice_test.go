@@ -187,7 +187,7 @@ func TestDifferentSpeedQueuesDefault(t *testing.T) {
 	}
 
 	for i := range 10 {
-		cesController.processNextWorkItem()
+		cesController.processNextWorkItem(t.Context())
 		if i < 4 {
 			standardQueueLen = 6
 			fastQueueLen = 3 - i
@@ -268,12 +268,12 @@ func TestCESManagementDefault(t *testing.T) {
 	}, time.Second); err != nil {
 		assert.Equal(t, 1, cesController.standardQueue.Len())
 	}
-	cesController.processNextWorkItem()
+	cesController.processNextWorkItem(t.Context())
 	//A CEP is enqueued and processed. Then, the same CEP (and CES) is enqueued
 	//to test if the CESStore works properly and if the associated CES can be found in the store
 	cesController.onEndpointUpdate(cep1)
 
-	queue := cesController.getQueue()
+	queue := cesController.getQueue(t.Context())
 	key, _ := queue.Get()
 	if err := testutils.WaitUntil(func() bool {
 		_, exists, _ := r.cesStore.GetByKey(NewCESKey(key.Name, "").key())
@@ -514,7 +514,7 @@ func TestDifferentSpeedQueues(t *testing.T) {
 	}
 
 	for i := range 10 {
-		cesController.processNextWorkItem()
+		cesController.processNextWorkItem(t.Context())
 		if i < 4 {
 			standardQueueLen = 6
 			fastQueueLen = 3 - i
@@ -628,12 +628,12 @@ func TestCESManagement(t *testing.T) {
 	}, time.Second); err != nil {
 		assert.Equal(t, 1, cesController.standardQueue.Len())
 	}
-	cesController.processNextWorkItem()
+	cesController.processNextWorkItem(t.Context())
 	//A CEP is enqueued and processed. Then, the same CEP (and CES) is enqueued
 	//to test if the CESStore works properly and if the associated CES can be found in the store
 	cesController.onPodUpdate(pod1)
 
-	queue := cesController.getQueue()
+	queue := cesController.getQueue(t.Context())
 	key, _ := queue.Get()
 	if err := testutils.WaitUntil(func() bool {
 		_, exists, _ := r.cesStore.GetByKey(NewCESKey(key.Name, "").key())

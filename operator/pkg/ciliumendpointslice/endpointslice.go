@@ -10,7 +10,6 @@ import (
 
 	"github.com/cilium/hive/cell"
 	"github.com/cilium/hive/job"
-	"github.com/cilium/workerpool"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -170,23 +169,26 @@ func (c *DefaultController) Start(ctx cell.HookContext) error {
 		job.OneShot("proc-ns-events", func(ctx context.Context, health cell.Health) error {
 			return c.processNamespaceEvents(ctx)
 		}),
+		job.OneShot("cilium-endpoints-updater", func(ctx context.Context, health cell.Health) error {
+			return c.runCiliumEndpointsUpdater(ctx)
+		}),
+		job.OneShot("cilium-endpoint-slices-updater", func(ctx context.Context, health cell.Health) error {
+			return c.runCiliumEndpointSliceUpdater(ctx)
+		}),
+		job.OneShot("cilium-nodes-updater", func(ctx context.Context, health cell.Health) error {
+			return c.runCiliumNodesUpdater(ctx)
+		}),
 	)
-	// Start the work pools processing CEP events only after syncing CES in local cache.
-	c.wp = workerpool.New(3)
-	c.wp.Submit("cilium-endpoints-updater", c.runCiliumEndpointsUpdater)
-	c.wp.Submit("cilium-endpoint-slices-updater", c.runCiliumEndpointSliceUpdater)
-	c.wp.Submit("cilium-nodes-updater", c.runCiliumNodesUpdater)
 
 	c.logger.InfoContext(ctx, "Starting CES controller reconciler.")
 	c.Job.Add(
 		job.OneShot("proc-queues", func(ctx context.Context, health cell.Health) error {
-			c.worker()
+			c.worker(ctx)
 			return nil
 		}),
 		// Add the shutdown job last so it stops first.
 		job.OneShot("shutdown", func(ctx context.Context, health cell.Health) error {
 			<-ctx.Done()
-			c.wp.Close()
 			c.fastQueue.ShutDown()
 			c.standardQueue.ShutDown()
 			c.contextCancel()
@@ -237,7 +239,7 @@ func (c *SlimController) Start(ctx cell.HookContext) error {
 			return c.runCiliumIdentitiesUpdater(ctx)
 		}),
 		job.OneShot("proc-queues", func(ctx context.Context, health cell.Health) error {
-			c.worker()
+			c.worker(ctx)
 			return nil
 		}),
 		// Add the shutdown job last so it stops first.
@@ -249,20 +251,8 @@ func (c *SlimController) Start(ctx cell.HookContext) error {
 			return nil
 		}),
 	)
-	// Start the work pools processing CEP events only after syncing CES in local cache.
-	// c.wp = workerpool.New(4)
-	// c.wp.Submit("cilium-pods-updater", c.runCiliumPodsUpdater)
-	// c.wp.Submit("cilium-endpoint-slices-updater", c.runCiliumEndpointSliceUpdater)
-	// c.wp.Submit("cilium-nodes-updater", c.runCiliumNodesUpdater)
-	// c.wp.Submit("cilium-identities-updater", c.runCiliumIdentitiesUpdater)
 
 	c.logger.InfoContext(ctx, "Starting CES controller reconciler.")
-	// c.Job.Add(
-	// 	job.OneShot("proc-queues", func(ctx context.Context, health cell.Health) error {
-	// 		c.worker()
-	// 		return nil
-	// 	}),
-	// )
 
 	return nil
 }
@@ -542,20 +532,20 @@ func (c *SlimController) syncCESsInLocalCache(ctx context.Context) error {
 
 // worker runs a worker thread that just dequeues items, processes them, and
 // marks them done.
-func (c *Controller) worker() {
-	for c.processNextWorkItem() {
+func (c *Controller) worker(ctx context.Context) {
+	for c.processNextWorkItem(ctx) {
 	}
 }
 
-func (c *Controller) rateLimitProcessing() {
+func (c *Controller) rateLimitProcessing(ctx context.Context) {
 	delay := c.rateLimit.getDelay()
 	select {
-	case <-c.context.Done():
+	case <-ctx.Done():
 	case <-time.After(delay):
 	}
 }
 
-func (c *Controller) getQueue() workqueue.TypedRateLimitingInterface[CESKey] {
+func (c *Controller) getQueue(ctx context.Context) workqueue.TypedRateLimitingInterface[CESKey] {
 	c.cond.L.Lock()
 	defer c.cond.L.Unlock()
 
@@ -570,9 +560,9 @@ func (c *Controller) getQueue() workqueue.TypedRateLimitingInterface[CESKey] {
 	}
 }
 
-func (c *Controller) processNextWorkItem() bool {
-	c.rateLimitProcessing()
-	queue := c.getQueue()
+func (c *Controller) processNextWorkItem(ctx context.Context) bool {
+	c.rateLimitProcessing(ctx)
+	queue := c.getQueue(ctx)
 	key, quit := queue.Get()
 	if quit {
 		return false

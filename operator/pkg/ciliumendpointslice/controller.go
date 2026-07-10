@@ -12,7 +12,6 @@ import (
 
 	"github.com/cilium/hive/cell"
 	"github.com/cilium/hive/job"
-	"github.com/cilium/workerpool"
 	"k8s.io/client-go/util/workqueue"
 
 	"github.com/cilium/cilium/pkg/datapath/linux/ipsec"
@@ -111,8 +110,6 @@ type DefaultController struct {
 	reconciler *defaultReconciler
 
 	ciliumEndpoint resource.Resource[*v2.CiliumEndpoint]
-
-	wp *workerpool.WorkerPool
 }
 
 // SlimController is the CES controller running in slim mode, creating CES
