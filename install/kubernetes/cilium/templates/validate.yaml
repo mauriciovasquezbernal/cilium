@@ -143,8 +143,8 @@
 
 {{/* validate Cilium operator */}}
 {{- if .Values.ciliumEndpointSlice.enabled }}
-  {{- if eq .Values.disableEndpointCRD true }}
-    {{ fail "if Cilium Endpoint Slice is enabled (.Values.ciliumEndpointSlice.enabled=true), it requires .Values.disableEndpointCRD=false" }}
+  {{- if and (eq .Values.disableEndpointCRD true) (ne .Values.ciliumEndpointSlice.controllerMode "slim") }}
+    {{ fail "if Cilium Endpoint Slice is enabled (.Values.ciliumEndpointSlice.enabled=true) with default controller mode, it requires .Values.disableEndpointCRD=false. Set .Values.ciliumEndpointSlice.controllerMode=slim to run without CiliumEndpoints." }}
   {{- end }}
 {{- end }}
 

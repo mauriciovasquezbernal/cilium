@@ -1366,6 +1366,9 @@ data:
 
 {{- if .Values.ciliumEndpointSlice.enabled }}
   enable-cilium-endpoint-slice: "true"
+  {{- if .Values.ciliumEndpointSlice.controllerMode }}
+  ces-controller-mode: {{ .Values.ciliumEndpointSlice.controllerMode | quote }}
+  {{- end }}
   {{- if .Values.ciliumEndpointSlice.rateLimits }}
   ces-rate-limits: {{ .Values.ciliumEndpointSlice.rateLimits | toJson | quote }}
   {{- end }}

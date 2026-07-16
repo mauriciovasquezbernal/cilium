@@ -950,6 +950,15 @@ forceDeviceDetection: false
 ciliumEndpointSlice:
   # -- Enable Cilium EndpointSlice feature.
   enabled: false
+  # @schema
+  # enum: ["default", "slim"]
+  # @schema
+  # -- Controller mode for the CES controller running in the operator.
+  # "default" reads CiliumEndpoints written by agents and batches them into
+  # CiliumEndpointSlices. "slim" reads Pods, CiliumIdentities and CiliumNodes
+  # directly and synthesizes the CoreCiliumEndpoint entries; when set, agents
+  # can skip writing CEPs by setting disableEndpointCRD=true.
+  controllerMode: default
   # -- List of rate limit options to be used for the CiliumEndpointSlice controller.
   # Each object in the list must have the following fields:
   # nodes: Count of nodes at which to apply the rate limit.
