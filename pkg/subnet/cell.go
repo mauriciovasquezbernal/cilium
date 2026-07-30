@@ -9,9 +9,8 @@ import (
 	"github.com/cilium/hive/cell"
 	"github.com/cilium/hive/job"
 
-	"github.com/cilium/cilium/pkg/dynamicconfig"
 	"github.com/cilium/cilium/pkg/endpoint/regeneration"
-	"github.com/cilium/cilium/pkg/logging/logfields"
+	k8sResources "github.com/cilium/cilium/pkg/k8s"
 	"github.com/cilium/cilium/pkg/option"
 )
 
@@ -24,6 +23,7 @@ var Cell = cell.Module(
 
 	cell.Provide(
 		newSubnetWatcher,
+		k8sResources.CiliumSubnetTopologyResource,
 	),
 
 	cell.Invoke(
@@ -36,6 +36,10 @@ func registerSubnetWatcher(cfg *option.DaemonConfig, fence regeneration.Fence, s
 		sw.logger.Debug("Routing mode is not hybrid, skipping subnet watcher")
 		return
 	}
+	if sw.topologyResource == nil {
+		sw.logger.Debug("Subnet topology resource is unavailable, skipping subnet watcher")
+		return
+	}
 
 	synced := make(chan struct{})
 
@@ -45,38 +49,12 @@ func registerSubnetWatcher(cfg *option.DaemonConfig, fence regeneration.Fence, s
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-synced:
-			sw.logger.Info("Subnet topology dynamic config synced")
+			sw.logger.Info("Subnet topology synced")
 			return nil
 		}
 	})
 
 	sw.jobGroup.Add(job.OneShot("subnet-watcher", func(ctx context.Context, health cell.Health) error {
-		sw.logger.Info("Starting subnet topology dynamic config watcher")
-		for {
-			entry, found, w := dynamicconfig.WatchKey(sw.db.ReadTxn(), sw.dynamicConfigTable, SubnetTopologyConfigKey)
-			if found {
-				sw.logger.Info("Detected change in subnet-topology dynamic config")
-				if err := sw.processSubnetConfigEntry(ctx, entry); err != nil {
-					sw.logger.Error("Failed to process subnet-topology dynamic config", logfields.Error, err)
-					health.Degraded("Failed to process subnet-topology dynamic config", err)
-				} else {
-					health.OK("subnet-topology dynamic config processed successfully")
-				}
-			}
-
-			// Signal initial sync is complete.
-			select {
-			case <-synced:
-			default:
-				close(synced)
-			}
-
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case <-w:
-				continue
-			}
-		}
+		return sw.run(ctx, health, synced)
 	}))
 }

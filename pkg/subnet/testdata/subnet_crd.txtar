@@ -1,0 +1,48 @@
+# Test CiliumSubnetTopology CRD sync to the subnet table and map. The CRD is
+# the only source of truth: the table mirrors the singleton object and is left
+# empty while that object does not exist.
+
+hive/start
+
+# No singleton object yet, so there are no subnet identities.
+* db/empty subnet-identities
+
+# Adding the CiliumSubnetTopology programs one identity per subnet group.
+k8s/add subnet-topology.yaml
+db/cmp subnet-identities subnet-crd.table
+
+# Dump the subnet map and confirm it matches the CRD topology.
+subnet/map-dump subnetmap.actual
+* cmp subnetmap.actual subnetmap.expected
+
+# Deleting the singleton clears the table again.
+k8s/delete subnet-topology.yaml
+* db/empty subnet-identities
+
+####
+
+-- subnet-topology.yaml --
+apiVersion: cilium.io/v2alpha1
+kind: CiliumSubnetTopology
+metadata:
+  name: default
+spec:
+  subnetGroups:
+    - name: net-a
+      cidrs:
+      - "10.10.0.0/24"
+      - "10.10.1.0/24"
+    - name: net-b
+      cidrs:
+      - "10.10.2.0/24"
+
+-- subnet-crd.table --
+Prefix               Identity
+10.10.0.0/24         1
+10.10.1.0/24         1
+10.10.2.0/24         2
+
+-- subnetmap.expected --
+PREFIX=10.10.0.0/24 IDENTITY=identity=1
+PREFIX=10.10.1.0/24 IDENTITY=identity=1
+PREFIX=10.10.2.0/24 IDENTITY=identity=2
