@@ -1,0 +1,81 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: ciliumsubnettopologies.cilium.io
+spec:
+  group: cilium.io
+  names:
+    categories:
+    - cilium
+    kind: CiliumSubnetTopology
+    listKind: CiliumSubnetTopologyList
+    plural: ciliumsubnettopologies
+    shortNames:
+    - cst
+    singular: ciliumsubnettopology
+  scope: Cluster
+  versions:
+  - name: v2alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          CiliumSubnetTopology describes the cluster-wide subnet topology used with
+          hybrid routing.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              subnetGroups:
+                description: |-
+                  SubnetGroups is the list of named subnet groups. Packets are natively
+                  routed within the same group.
+                items:
+                  properties:
+                    cidrs:
+                      description: CIDRs is the list of CIDRs that belong to this
+                        subnet group.
+                      items:
+                        format: cidr
+                        type: string
+                      minItems: 1
+                      type: array
+                    name:
+                      description: Name is the unique, human-readable name of the
+                        subnet group.
+                      type: string
+                  required:
+                  - cidrs
+                  - name
+                  type: object
+                minItems: 1
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
+            required:
+            - subnetGroups
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true

@@ -99,6 +99,9 @@ const (
 
 	// CRIPCRDName is the full name of the CiliumResourceIPPool CRD.
 	CRIPCRDName = k8sconstv2alpha1.CRIPKindDefinition + "/" + k8sconstv2alpha1.CustomResourceDefinitionVersion
+
+	// CSTCRDName is the full name of the CiliumSubnetTopology CRD.
+	CSTCRDName = k8sconstv2alpha1.CSTKindDefinition + "/" + k8sconstv2alpha1.CustomResourceDefinitionVersion
 )
 
 type CRDList struct {
@@ -209,6 +212,10 @@ func CustomResourceDefinitionList() map[string]*CRDList {
 			Name:     CRIPCRDName,
 			FullName: k8sconstv2alpha1.CRIPName,
 		},
+		synced.CRDResourceName(k8sconstv2alpha1.CSTName): {
+			Name:     CSTCRDName,
+			FullName: k8sconstv2alpha1.CSTName,
+		},
 	}
 }
 
@@ -309,6 +316,9 @@ var (
 
 	//go:embed crds/v2alpha1/ciliumresourceippools.yaml
 	crdsv2Alpha1CiliumResourceIPPools []byte
+
+	//go:embed crds/v2alpha1/ciliumsubnettopologies.yaml
+	crdsv2Alpha1CiliumSubnetTopologies []byte
 )
 
 // GetPregeneratedCRD returns the pregenerated CRD based on the requested CRD
@@ -373,6 +383,8 @@ func GetPregeneratedCRD(logger *slog.Logger, crdName string) apiextensionsv1.Cus
 		crdBytes = crdsv2Alpha1CiliumNetworkDriverNodeConfigs
 	case CRIPCRDName:
 		crdBytes = crdsv2Alpha1CiliumResourceIPPools
+	case CSTCRDName:
+		crdBytes = crdsv2Alpha1CiliumSubnetTopologies
 	default:
 		logging.Fatal(logger, "Pregenerated CRD does not exist", logfields.CRDName, crdName)
 	}

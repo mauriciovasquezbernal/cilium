@@ -68,3 +68,7 @@ type CiliumPodIPPoolListerExpansion interface{}
 // CiliumResourceIPPoolListerExpansion allows custom methods to be added to
 // CiliumResourceIPPoolLister.
 type CiliumResourceIPPoolListerExpansion interface{}
+
+// CiliumSubnetTopologyListerExpansion allows custom methods to be added to
+// CiliumSubnetTopologyLister.
+type CiliumSubnetTopologyListerExpansion interface{}

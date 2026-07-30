@@ -112,6 +112,11 @@ const (
 	CRIPPluralName     = "ciliumresourceippools"
 	CRIPKindDefinition = "CiliumResourceIPPool"
 	CRIPName           = CRIPPluralName + "." + CustomResourceDefinitionGroup
+
+	// CiliumSubnetTopology (CST)
+	CSTPluralName     = "ciliumsubnettopologies"
+	CSTKindDefinition = "CiliumSubnetTopology"
+	CSTName           = CSTPluralName + "." + CustomResourceDefinitionGroup
 )
 
 // SchemeGroupVersion is group version used to register these objects
@@ -191,6 +196,10 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&CiliumNetworkDriverNodeConfigList{},
 		&CiliumResourceIPPool{},
 		&CiliumResourceIPPoolList{},
+
+		// Cilium Subnet Topology types
+		&CiliumSubnetTopology{},
+		&CiliumSubnetTopologyList{},
 	)
 
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)

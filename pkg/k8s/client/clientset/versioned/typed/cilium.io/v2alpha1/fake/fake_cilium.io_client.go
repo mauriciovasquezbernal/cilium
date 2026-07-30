@@ -75,6 +75,10 @@ func (c *FakeCiliumV2alpha1) CiliumResourceIPPools() v2alpha1.CiliumResourceIPPo
 	return newFakeCiliumResourceIPPools(c)
 }
 
+func (c *FakeCiliumV2alpha1) CiliumSubnetTopologies() v2alpha1.CiliumSubnetTopologyInterface {
+	return newFakeCiliumSubnetTopologies(c)
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeCiliumV2alpha1) RESTClient() rest.Interface {

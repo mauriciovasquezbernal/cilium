@@ -30,6 +30,7 @@ type CiliumV2alpha1Interface interface {
 	CiliumNetworkDriverNodeConfigsGetter
 	CiliumPodIPPoolsGetter
 	CiliumResourceIPPoolsGetter
+	CiliumSubnetTopologiesGetter
 }
 
 // CiliumV2alpha1Client is used to interact with features provided by the cilium.io group.
@@ -95,6 +96,10 @@ func (c *CiliumV2alpha1Client) CiliumPodIPPools() CiliumPodIPPoolInterface {
 
 func (c *CiliumV2alpha1Client) CiliumResourceIPPools() CiliumResourceIPPoolInterface {
 	return newCiliumResourceIPPools(c)
+}
+
+func (c *CiliumV2alpha1Client) CiliumSubnetTopologies() CiliumSubnetTopologyInterface {
+	return newCiliumSubnetTopologies(c)
 }
 
 // NewForConfig creates a new CiliumV2alpha1Client for the given config.

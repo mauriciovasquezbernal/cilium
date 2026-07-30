@@ -90,6 +90,9 @@ func agentCRDResourceNames(bgpCfg bgpConfig.BGPConfig) []string {
 	if option.Config.EnableDatapathPlugins {
 		result = append(result, CRDResourceName(v2alpha1.CDPPName))
 	}
+	if option.Config.RoutingMode == option.RoutingModeHybrid {
+		result = append(result, CRDResourceName(v2alpha1.CSTName))
+	}
 
 	result = append(result,
 		CRDResourceName(v2.LBIPPoolName),
