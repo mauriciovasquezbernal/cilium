@@ -1,3 +1,18 @@
+### NATIVE ###
+
+#routingMode: native
+#autoDirectNodeRoutes: true
+#ipv4NativeRoutingCIDR: 10.1.0.0/16
+#ipv6NativeRoutingCIDR: fd00:10:1::/48
+
+### HYBRID ###
+routingMode: hybrid
+autoDirectNodeRoutes: true
+ipv4NativeRoutingCIDR: 10.1.0.0/16
+ipv6NativeRoutingCIDR: fd00:10:1::/48
+extraConfig:
+  subnet-topology: "10.1.0.0/16;10.2.0.0/16"
+
 cluster:
   name: clustermesh1
   id: 1
