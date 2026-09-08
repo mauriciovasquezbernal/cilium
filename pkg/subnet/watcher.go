@@ -13,7 +13,6 @@ import (
 	"github.com/cilium/hive/job"
 	"github.com/cilium/statedb"
 
-	"github.com/cilium/cilium/pkg/dynamicconfig"
 	"github.com/cilium/cilium/pkg/k8s/apis/cilium.io/v2alpha1"
 	"github.com/cilium/cilium/pkg/k8s/resource"
 	"github.com/cilium/cilium/pkg/logging/logfields"
@@ -24,34 +23,31 @@ import (
 type watcherParams struct {
 	cell.In
 
-	Logger             *slog.Logger
-	DynamicConfigTable statedb.Table[dynamicconfig.DynamicConfig]
-	SubnetTable        statedb.RWTable[subnetTable.SubnetTableEntry]
-	DB                 *statedb.DB
-	JobGroup           job.Group
-	NodeWriter         *node.Writer                                      `optional:"true"`
-	TopologyResource   resource.Resource[*v2alpha1.CiliumSubnetTopology] `optional:"true"`
+	Logger           *slog.Logger
+	SubnetTable      statedb.RWTable[subnetTable.SubnetTableEntry]
+	DB               *statedb.DB
+	JobGroup         job.Group
+	NodeWriter       *node.Writer                                      `optional:"true"`
+	TopologyResource resource.Resource[*v2alpha1.CiliumSubnetTopology] `optional:"true"`
 }
 
 type SubnetWatcher struct {
-	logger             *slog.Logger
-	dynamicConfigTable statedb.Table[dynamicconfig.DynamicConfig]
-	subnetTable        statedb.RWTable[subnetTable.SubnetTableEntry]
-	db                 *statedb.DB
-	jobGroup           job.Group
-	nodeWriter         *node.Writer
-	topologyResource   resource.Resource[*v2alpha1.CiliumSubnetTopology]
+	logger           *slog.Logger
+	subnetTable      statedb.RWTable[subnetTable.SubnetTableEntry]
+	db               *statedb.DB
+	jobGroup         job.Group
+	nodeWriter       *node.Writer
+	topologyResource resource.Resource[*v2alpha1.CiliumSubnetTopology]
 }
 
 func newSubnetWatcher(params watcherParams) *SubnetWatcher {
 	return &SubnetWatcher{
-		logger:             params.Logger,
-		dynamicConfigTable: params.DynamicConfigTable,
-		subnetTable:        params.SubnetTable,
-		db:                 params.DB,
-		jobGroup:           params.JobGroup,
-		nodeWriter:         params.NodeWriter,
-		topologyResource:   params.TopologyResource,
+		logger:           params.Logger,
+		subnetTable:      params.SubnetTable,
+		db:               params.DB,
+		jobGroup:         params.JobGroup,
+		nodeWriter:       params.NodeWriter,
+		topologyResource: params.TopologyResource,
 	}
 }
 

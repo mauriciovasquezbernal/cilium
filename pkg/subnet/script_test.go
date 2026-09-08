@@ -17,7 +17,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cilium/cilium/pkg/dynamicconfig"
 	"github.com/cilium/cilium/pkg/endpoint/regeneration"
 	"github.com/cilium/cilium/pkg/hive"
 	k8sClient "github.com/cilium/cilium/pkg/k8s/client/testutils"
@@ -35,7 +34,6 @@ func TestPrivilegedScript(t *testing.T) {
 		h := hive.New(
 			k8sClient.FakeClientCell(),
 
-			dynamicconfig.Cell,
 			cell.Provide(
 				func() *option.DaemonConfig {
 					return &option.DaemonConfig{

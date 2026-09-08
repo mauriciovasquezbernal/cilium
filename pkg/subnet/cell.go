@@ -19,8 +19,6 @@ var Cell = cell.Module(
 	"subnet",
 	"Subnet watcher and management",
 
-	cell.Config(DefaultConfig),
-
 	cell.Provide(
 		newSubnetWatcher,
 		k8sResources.CiliumSubnetTopologyResource,

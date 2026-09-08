@@ -581,10 +581,6 @@ func (s *podToPodEncryptionV2) Run(ctx context.Context, t *check.Test) {
 	if !ok {
 		t.Fatalf("Failed to detect IPv6 feature")
 	}
-	subnetTopology, ok := s.ct.Feature(features.SubnetTopology)
-	if !ok {
-		t.Fatalf("Failed to detect subnet topology")
-	}
 	tunnelMode, ok := s.ct.Feature(features.Tunnel)
 	if !ok {
 		t.Fatalf("Failed to detect tunnel mode")
@@ -616,11 +612,7 @@ func (s *podToPodEncryptionV2) Run(ctx context.Context, t *check.Test) {
 
 	// usesTunnelRouting determines if pod-to-pod traffic between s.client and s.server
 	// will be tunnel encap'd.
-	// This is true when tunnel mode is enabled and the client and server pods are
-	// not in the same subnet, as determined by the cluster's subnet topology.
-	// The subnet check is needed in case of hybrid routing mode,
-	// where pod-to-pod traffic in the same subnet is natively routed.
-	s.usesTunnelRouting = tunnelMode.Enabled && !features.SameSubnet(s.client.Pod.Status.PodIP, s.server.Pod.Status.PodIP, subnetTopology.Mode)
+	s.usesTunnelRouting = tunnelMode.Enabled
 
 	// grab host namespace pods for accessing the network namespaces of client
 	// and server pods.
