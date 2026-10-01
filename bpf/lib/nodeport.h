@@ -20,6 +20,7 @@
 #include "overloadable.h"
 #include "egress_gateway.h"
 #include "eps.h"
+#include "subnet.h"
 #include "conntrack.h"
 #include "encap.h"
 #include "identity.h"
@@ -1271,8 +1272,10 @@ int tail_nodeport_nat_egress_ipv6(struct __ctx_buff *ctx)
 	struct ipv6hdr *ip6;
 	__s8 ext_err = 0;
 #ifdef TUNNEL_MODE
-	const struct remote_endpoint_info *info;
+	const struct remote_endpoint_info *info = NULL;
 	union v6addr *dst;
+	bool same_subnet_id = false;
+	union v6addr direct_routing = CONFIG(ipv6_direct_routing);
 #endif
 
 	if (nat_46x64)
@@ -1294,7 +1297,13 @@ int tail_nodeport_nat_egress_ipv6(struct __ctx_buff *ctx)
 
 #ifdef TUNNEL_MODE
 	dst = (union v6addr *)&ip6->daddr;
-	info = lookup_ip6_remote_endpoint(dst, 0);
+
+	if (CONFIG(hybrid_routing_enabled))
+		same_subnet_id = is_subnet_same_id6(&direct_routing, dst);
+
+	if (!same_subnet_id)
+		info = lookup_ip6_remote_endpoint(dst, 0);
+
 	if (info && info->flag_has_tunnel_ep && !info->flag_skip_tunnel) {
 		target.addr = CONFIG(router_ipv6);
 		/* skip over the source SNAT lookup if we know we'll be using
@@ -2547,8 +2556,9 @@ int tail_nodeport_nat_egress_ipv4(struct __ctx_buff *ctx)
 #ifdef TUNNEL_MODE
 	__u32 src_sec_identity = ctx_load_meta(ctx, CB_SRC_LABEL);
 	__u8 cluster_id __maybe_unused = (__u8)ctx_load_meta(ctx, CB_CLUSTER_ID_EGRESS);
-	const struct remote_endpoint_info *info;
+	const struct remote_endpoint_info *info = NULL;
 	__be32 tunnel_endpoint = 0;
+	bool same_subnet_id = false;
 #endif
 
 	select_nat_port_range_ipv4(&target);
@@ -2562,7 +2572,12 @@ int tail_nodeport_nat_egress_ipv4(struct __ctx_buff *ctx)
 	l4_off = ETH_HLEN + ipv4_hdrlen(ip4);
 
 #ifdef TUNNEL_MODE
-	info = lookup_ip4_remote_endpoint(ip4->daddr, cluster_id);
+	if (CONFIG(hybrid_routing_enabled))
+		same_subnet_id = is_subnet_same_id4(CONFIG(ipv4_direct_routing).be32, ip4->daddr);
+
+	if (!same_subnet_id)
+		info = lookup_ip4_remote_endpoint(ip4->daddr, cluster_id);
+
 	if (info && info->flag_has_tunnel_ep && !info->flag_skip_tunnel) {
 		tunnel_endpoint = info->tunnel_endpoint.ip4.be32;
 		dst_sec_identity = info->sec_identity;
